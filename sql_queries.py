@@ -13,11 +13,11 @@ songplay_table_create = ("""
     CREATE TABLE IF NOT EXISTS songplays
     (
     songplay_id serial PRIMARY KEY
-    , start_time timestamp
-    , user_id varchar
+    , start_time timestamp NOT NULL 
+    , user_id int NOT NULL
     , level varchar
-    , song_id varchar
-    , artist_id varchar
+    , song_id varchar 
+    , artist_id varchar 
     , session_id varchar
     , location varchar
     , user_agent varchar
@@ -27,9 +27,9 @@ songplay_table_create = ("""
 user_table_create = ("""
     CREATE TABLE IF NOT EXISTS users
     (
-    user_id varchar
-    , first_name varchar
-    , last_name varchar
+    user_id int PRIMARY KEY
+    , first_name varchar NOT NULL
+    , last_name varchar NOT NULL
     , gender varchar
     , level varchar
     );
@@ -38,19 +38,19 @@ user_table_create = ("""
 song_table_create = ("""
     CREATE TABLE IF NOT EXISTS songs
     (
-    song_id varchar
-    , title varchar
-    , artist_id varchar
+    song_id varchar PRIMARY KEY
+    , title varchar NOT NULL
+    , artist_id varchar NOT NULL
     , year int
-    , duration numeric
+    , duration numeric NOT NULL
     );
 """)
 
 artist_table_create = ("""
     CREATE TABLE IF NOT EXISTS artists 
     (
-    artist_id varchar 
-    , name varchar
+    artist_id varchar PRIMARY KEY
+    , name varchar NOT NULL
     , location varchar
     , latitude float
     , longitude float
@@ -60,7 +60,7 @@ artist_table_create = ("""
 time_table_create = ("""
     CREATE TABLE IF NOT EXISTS time
     (
-    start_time timestamp
+    start_time timestamp PRIMARY KEY
     , hour int
     , day int
     , week int
@@ -84,7 +84,7 @@ songplay_table_insert = ("""
     , location
     , user_agent
     ) 
-    VALUES(%s, %s, %s, %s, %s, %s, %s, %s)
+    VALUES(%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT(songplay_id) DO NOTHING;
 """)
 
 user_table_insert = ("""
@@ -96,7 +96,7 @@ user_table_insert = ("""
     , gender
     , level
     ) 
-    VALUES(%s, %s, %s, %s, %s)
+    VALUES(%s, %s, %s, %s, %s) ON CONFLICT(user_id) DO UPDATE SET level = excluded.level;
 """)
 
 song_table_insert = ("""
@@ -108,7 +108,7 @@ song_table_insert = ("""
     , year
     , duration
     )
-    VALUES(%s, %s, %s, %s, %s)
+    VALUES(%s, %s, %s, %s, %s) ON CONFLICT(song_id) DO NOTHING;
 """)
 
 artist_table_insert = ("""
@@ -120,7 +120,7 @@ artist_table_insert = ("""
     , latitude
     , longitude
     ) 
-    VALUES(%s, %s, %s, %s, %s)
+    VALUES(%s, %s, %s, %s, %s) ON CONFLICT(artist_id) DO NOTHING;
 """)
 
 
@@ -135,7 +135,9 @@ time_table_insert = ("""
     , year
     , weekday
     ) 
-    VALUES(%s, %s, %s, %s, %s, %s, %s)
+    VALUES(%s, %s, %s, %s, %s, %s, %s) ON CONFLICT(start_time) DO UPDATE
+                    SET hour=EXCLUDED.hour, day=EXCLUDED.day, week=EXCLUDED.week, month=EXCLUDED.month,  
+                    year=EXCLUDED.year,weekday=EXCLUDED.weekday;
 """)
 
 # FIND SONGS
