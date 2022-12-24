@@ -62,11 +62,6 @@ for f in file_path_list:
             #print(line)
             full_data_rows_list.append(line) 
             
-# uncomment the code below if you would like to get total number of rows 
-#print(len(full_data_rows_list))
-# uncomment the code below if you would like to check to see what the list of event data rows will look like
-#print(full_data_rows_list)
-
 # creating a smaller event data csv file called event_datafile_full csv that will be used to insert data into the \
 # Apache Cassandra tables
 csv.register_dialect('myDialect', quoting=csv.QUOTE_ALL, skipinitialspace=True)
@@ -114,13 +109,9 @@ with open('event_datafile_new.csv', 'r', encoding = 'utf8') as f:
 # In[5]:
 
 
-# This should make a connection to a Cassandra instance your local machine 
-# (127.0.0.1)
-
 from cassandra.cluster import Cluster
 cluster = Cluster()
 
-# To establish connection and begin executing queries, need a session
 session = cluster.connect()
 
 
@@ -129,7 +120,6 @@ session = cluster.connect()
 # In[6]:
 
 
-# TO-DO: Create a Keyspace 
 try:
     session.execute("""
     CREATE KEYSPACE IF NOT EXISTS apachecassandra 
@@ -146,7 +136,6 @@ except Exception as e:
 # In[7]:
 
 
-# TO-DO: Set KEYSPACE to the keyspace specified above
 try:
     session.set_keyspace('apachecassandra')
 except Exception as e:
@@ -168,17 +157,9 @@ except Exception as e:
 # 
 # 
 
-# In[8]:
-
-
-## TO-DO: Query 1:  Give me the artist, song title and song's length in the music app history that was heard during \
-## sessionId = 338, and itemInSession = 4
-                 
-
-
 # **Drop Session Table**
 
-# In[9]:
+# In[8]:
 
 
 qry = "DROP TABLE IF EXISTS session_table"
@@ -189,8 +170,10 @@ except Exception as e:
 
 
 # **Create Session Table**
+# 
+# The session table is constructed to return the artist, song title and song's length during sessionId 338 and intemInSession 4.<br>The unique primary key is a composed of sessionId and itemInSession. This will facilitate filtering the data.
 
-# In[10]:
+# In[9]:
 
 
 qry = "CREATE TABLE IF NOT EXISTS session_table " 
@@ -205,30 +188,25 @@ except Exception as e:
 
 # **Insert Data into Session Table**
 
-# In[11]:
+# In[10]:
 
 
-# We have provided part of the code to set up the CSV file. Please complete the Apache Cassandra code below#
 file = 'event_datafile_new.csv'
 
 with open(file, encoding = 'utf8') as f:
     csvreader = csv.reader(f)
     next(csvreader) # skip header
     for line in csvreader:
-## TO-DO: Assign the INSERT statements into the `query` variable
         query = "INSERT INTO session_table(sessionId, itemInSession, artist, song, length)"
         query = query + "VALUES(%s,%s,%s,%s,%s)"
-        ## TO-DO: Assign which column element should be assigned for each column in the INSERT statement.
-        ## For e.g., to INSERT artist_name and user first_name, you would change the code below to `line[0], line[1]`
         session.execute(query, (int(line[8]), int(line[3]), line[0], line[9], float(line[5])))
 
 
 # #### Do a SELECT to verify that the data have been inserted into Session table
 
-# In[12]:
+# In[11]:
 
 
-## TO-DO: Add in the SELECT statement to verify the data was entered into the table
 qry = "SELECT artist,song,length FROM session_table WHERE sessionId = 338 AND itemInSession = 4"
 try:
     rows = session.execute(qry)
@@ -239,22 +217,10 @@ for row in rows:
     print(row.artist,row.song,row.length)
 
 
-# ### COPY AND REPEAT THE ABOVE THREE CELLS FOR EACH OF THE THREE QUESTIONS
-
-# In[13]:
-
-
-## TO-DO: Query 2: Give me only the following: name of artist, song (sorted by itemInSession) and user (first and last name)\
-## for userid = 10, sessionid = 182
-
-
-                    
-
-
 # **Drop User Table**
 # 
 
-# In[14]:
+# In[12]:
 
 
 qry = "DROP TABLE IF EXISTS user_table"
@@ -265,13 +231,15 @@ except Exception as e:
 
 
 # **Create User Table**
+# 
+# The User table is constructed to return the name of artist, song (sorted by itemInSession) and user (first and last name) for userid = 10 and sessionid = 182. To facilitate the query a unique primary key consisting of sessionID and userId is created  with itemInSession as a clustering column to fulfill the sorting requirement.
 
-# In[15]:
+# In[13]:
 
 
 qry = "CREATE TABLE IF NOT EXISTS user_table " 
-qry = qry + "(sessionId int, itemInSession int, userId int, artist text, song text, firstname text, lastname text, "
-qry = qry + "PRIMARY KEY((userid, sessionId),itemInSession))"
+qry = qry + "(sessionId int, userId int, itemInSession int, artist text, song text, firstname text, lastname text, "
+qry = qry + "PRIMARY KEY((sessionId,userid ),itemInSession))"
 
 try:
     session.execute(qry)
@@ -281,30 +249,25 @@ except Exception as e:
 
 # **Insert Data into User Table**
 
-# In[16]:
+# In[14]:
 
 
-# We have provided part of the code to set up the CSV file. Please complete the Apache Cassandra code below#
 file = 'event_datafile_new.csv'
 
 with open(file, encoding = 'utf8') as f:
     csvreader = csv.reader(f)
     next(csvreader) # skip header
     for line in csvreader:
-## TO-DO: Assign the INSERT statements into the `query` variable
-        query = "INSERT INTO user_table(sessionId, itemInSession, userId, artist, song, firstname, lastname)"
+        query = "INSERT INTO user_table(sessionId, userId, itemInSession, artist, song, firstname, lastname)"
         query = query + "VALUES(%s,%s,%s,%s,%s,%s,%s)"
-        ## TO-DO: Assign which column element should be assigned for each column in the INSERT statement.
-        ## For e.g., to INSERT artist_name and user first_name, you would change the code below to `line[0], line[1]`
-        session.execute(query, (int(line[8]), int(line[3]), int(line[10]),line[0], line[9], line[1], line[4]))
+        session.execute(query, (int(line[8]), int(line[10]), int(line[3]),line[0], line[9], line[1], line[4]))
 
 
 # #### Do a SELECT to verify that the data have been inserted into User table
 
-# In[17]:
+# In[15]:
 
 
-## TO-DO: Add in the SELECT statement to verify the data was entered into the table
 qry = "SELECT artist, song, firstname, lastname FROM user_table WHERE sessionId = 182 AND userId = 10"
 try:
     rows = session.execute(qry)
@@ -315,16 +278,9 @@ for row in rows:
     print(row.artist,row.song,row.firstname, row.lastname)
 
 
-# In[18]:
-
-
-## TO-DO: Query 3: Give me every user name (first and last) in my music app history who listened to the song 'All Hands Against His Own'
-                 
-
-
 # **Drop Song Table**
 
-# In[19]:
+# In[16]:
 
 
 qry = "DROP TABLE IF EXISTS song_table"
@@ -335,13 +291,15 @@ except Exception as e:
 
 
 # **Create Song Table**
+# 
+# The Song table is created to give every user name (first and last) in the music app history who listened to the song 'All Hands Against His Own'. The unique primary key consisting of userId and song was created to facilitate extracting the relevant data.
 
-# In[20]:
+# In[17]:
 
 
 qry = "CREATE TABLE IF NOT EXISTS song_table " 
-qry = qry + "(sessionId int, itemInSession int, userId int, artist text, song text, firstname text, lastname text, "
-qry = qry + "PRIMARY KEY((song, sessionId),itemInSession))"
+qry = qry + "(userId int, song text, artist text, firstname text, lastname text, "
+qry = qry + "PRIMARY KEY(userId,song))"
 
 try:
     session.execute(qry)
@@ -351,30 +309,26 @@ except Exception as e:
 
 # **Insert Data into Song Table**
 
-# In[21]:
+# In[18]:
 
 
-# We have provided part of the code to set up the CSV file. Please complete the Apache Cassandra code below#
 file = 'event_datafile_new.csv'
 
 with open(file, encoding = 'utf8') as f:
     csvreader = csv.reader(f)
     next(csvreader) # skip header
     for line in csvreader:
-## TO-DO: Assign the INSERT statements into the `query` variable
-        query = "INSERT INTO song_table(sessionId, itemInSession, userId, artist, song, firstname, lastname)"
-        query = query + "VALUES(%s,%s,%s,%s,%s,%s,%s)"
-        ## TO-DO: Assign which column element should be assigned for each column in the INSERT statement.
-        ## For e.g., to INSERT artist_name and user first_name, you would change the code below to `line[0], line[1]`
-        session.execute(query, (int(line[8]), int(line[3]), int(line[10]),line[0], line[9], line[1], line[4]))
+        query = "INSERT INTO song_table(userId, song, artist, firstname, lastname)"
+        query = query + "VALUES(%s,%s,%s,%s,%s)"
+        session.execute(query, (int(line[10]), line[9], line[0], line[1], line[4]))
 
 
 # #### Do a SELECT to verify that the data have been inserted into Song table
 
-# In[22]:
+# In[19]:
 
 
-## TO-DO: Add in the SELECT statement to verify the data was entered into the table
+
 qry = "SELECT artist, song, firstname, lastname FROM song_table WHERE song = 'All Hands Against His Own' ALLOW FILTERING "
 try:
     rows = session.execute(qry)
@@ -387,13 +341,7 @@ for row in rows:
 
 # ### Drop the tables before closing out the sessions
 
-# In[23]:
-
-
-## TO-DO: Drop the table before closing out the sessions
-
-
-# In[24]:
+# In[20]:
 
 
 qry = "DROP TABLE IF EXISTS session_table"
@@ -419,7 +367,7 @@ except Exception as e:
 
 # ### Close the session and cluster connection¶
 
-# In[25]:
+# In[21]:
 
 
 session.shutdown()
